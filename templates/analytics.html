@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4"><i class="fas fa-chart-bar"></i> Analytics Dashboard</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Predictions by Model</h5>
+            </div>
+            <div class="card-body">
+                {% if predictions_by_model %}
+                    <canvas id="modelChart" height="200"></canvas>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No prediction data available yet.</p>
+                        <a href="{% url 'predict_energy' %}" class="btn btn-primary">Make Your First Prediction</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Daily Predictions (Last 30 Days)</h5>
+            </div>
+            <div class="card-body">
+                {% if daily_predictions %}
+                    <canvas id="dailyChart" height="200"></canvas>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No daily prediction data available.</p>
+                        <a href="{% url 'predict_energy' %}" class="btn btn-primary">Make Predictions</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Energy Consumption Trends</h5>
+            </div>
+            <div class="card-body">
+                {% if consumption_trends %}
+                    <canvas id="trendsChart" height="150"></canvas>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-area fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No consumption trend data available.</p>
+                        <p class="text-muted">Start making predictions to see your energy consumption trends!</p>
+                        <a href="{% url 'predict_energy' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-magic"></i> Make Your First Prediction
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Data as JSON -->
+{% if predictions_by_model %}
+<script id="model-data" type="application/json">
+{
+    "labels": [{% for pred in predictions_by_model %}"{{ pred.model_used|title }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+    "data": [{% for pred in predictions_by_model %}{{ pred.count }}{% if not forloop.last %},{% endif %}{% endfor %}]
+}
+</script>
+{% endif %}
+
+{% if daily_predictions %}
+<script id="daily-data" type="application/json">
+{
+    "labels": [{% for pred in daily_predictions %}"{{ pred.date }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+    "data": [{% for pred in daily_predictions %}{{ pred.count }}{% if not forloop.last %},{% endif %}{% endfor %}]
+}
+</script>
+{% endif %}
+
+{% if consumption_trends %}
+<script id="trends-data" type="application/json">
+{
+    "labels": [{% for trend in consumption_trends %}"{{ trend.created_at|date:"m/d H:i" }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+    "data": [{% for trend in consumption_trends %}{{ trend.predicted_consumption }}{% if not forloop.last %},{% endif %}{% endfor %}]
+}
+</script>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Model Usage Chart
+    const modelDataScript = document.getElementById('model-data');
+    if (modelDataScript) {
+        const modelData = JSON.parse(modelDataScript.textContent);
+        const modelCtx = document.getElementById('modelChart');
+        if (modelCtx) {
+            new Chart(modelCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: modelData.labels,
+                    datasets: [{
+                        data: modelData.data,
+                        backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Daily Predictions Chart
+    const dailyDataScript = document.getElementById('daily-data');
+    if (dailyDataScript) {
+        const dailyData = JSON.parse(dailyDataScript.textContent);
+        const dailyCtx = document.getElementById('dailyChart');
+        if (dailyCtx) {
+            new Chart(dailyCtx, {
+                type: 'bar',
+                data: {
+                    labels: dailyData.labels,
+                    datasets: [{
+                        label: 'Predictions',
+                        data: dailyData.data,
+                        backgroundColor: '#0d6efd'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Consumption Trends Chart
+    const trendsDataScript = document.getElementById('trends-data');
+    if (trendsDataScript) {
+        const trendsData = JSON.parse(trendsDataScript.textContent);
+        const trendsCtx = document.getElementById('trendsChart');
+        if (trendsCtx) {
+            new Chart(trendsCtx, {
+                type: 'line',
+                data: {
+                    labels: trendsData.labels,
+                    datasets: [{
+                        label: 'Predicted Consumption (MW)',
+                        data: trendsData.data,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+});
+</script>
+{% endblock %}

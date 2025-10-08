@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Energy Prediction{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-magic"></i> Energy Consumption Prediction</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.input_datetime.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar-alt"></i> Date & Time
+                            </label>
+                            {{ form.input_datetime }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.model_choice.id_for_label }}" class="form-label">
+                                <i class="fas fa-brain"></i> Prediction Model
+                            </label>
+                            {{ form.model_choice }}
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-bolt"></i> Predict Energy Consumption
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>How it works:</strong> Our models analyze time patterns from the AEP dataset 
+                    to predict energy consumption in Megawatts (MW).
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if recent_predictions %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Your Recent Predictions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Predicted (MW)</th>
+                                <th>Model Used</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prediction in recent_predictions %}
+                            <tr>
+                                <td>{{ prediction.input_datetime|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        {{ prediction.predicted_consumption|floatformat:2 }} MW
+                                    </span>
+                                </td>
+                                <td>{{ prediction.get_model_used_display }}</td>
+                                <td>{{ prediction.created_at|date:"M d, H:i" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

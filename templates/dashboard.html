@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Energy Prediction{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_predictions }}</h4>
+                        <p class="mb-0">Total Predictions</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ weekly_predictions }}</h4>
+                        <p class="mb-0">This Week</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calendar-week fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ avg_consumption }}</h4>
+                        <p class="mb-0">Avg MW</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-tachometer-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ profile.created_at|date:"M d" }}</h4>
+                        <p class="mb-0">Member Since</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-plus fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12 text-center">
+        <a href="{% url 'predict_energy' %}" class="btn btn-primary btn-lg me-3">
+            <i class="fas fa-magic"></i> Make New Prediction
+        </a>
+        <a href="{% url 'analytics' %}" class="btn btn-outline-primary btn-lg">
+            <i class="fas fa-chart-bar"></i> View Analytics
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Recent Predictions</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_predictions %}
+                    {% for prediction in recent_predictions %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                        <div>
+                            <strong>{{ prediction.predicted_consumption|floatformat:2 }} MW</strong>
+                            <small class="text-muted d-block">
+                                {{ prediction.input_datetime|date:"M d, Y H:i" }} | {{ prediction.get_model_used_display }}
+                            </small>
+                        </div>
+                        <small class="text-muted">{{ prediction.created_at|timesince }} ago</small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No predictions yet. Start by making your first prediction!</p>
+                    <a href="{% url 'predict_energy' %}" class="btn btn-primary">Make Prediction</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-user"></i> Profile Summary</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if profile.avatar %}
+                    <img src="{{ profile.avatar.url }}" class="rounded-circle mb-3" width="80" height="80">
+                {% else %}
+                    <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-user fa-2x text-white"></i>
+                    </div>
+                {% endif %}
+                
+                <h6>{{ user.get_full_name|default:user.username }}</h6>
+                <p class="text-muted">{{ profile.bio|default:"Energy prediction enthusiast" }}</p>
+                
+                {% if profile.location %}
+                    <p><i class="fas fa-map-marker-alt"></i> {{ profile.location }}</p>
+                {% endif %}
+                
+                <a href="{% url 'profile' %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
